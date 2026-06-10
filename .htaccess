@@ -1,0 +1,20 @@
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# Prevent directory listing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "\.(sql|md|env|gitignore|json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect config, includes, sql folders
+RewriteRule ^(config|includes|sql)/ - [F,L]
+
+# Set PHP
+php_value date.timezone Africa/Lagos
+php_value upload_max_filesize 10M
+php_value post_max_size 10M

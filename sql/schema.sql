@@ -1,0 +1,35 @@
+CREATE DATABASE IF NOT EXISTS old_boys_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE old_boys_db;
+
+CREATE TABLE members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100) NOT NULL DEFAULT '',
+    last_name VARCHAR(100) NOT NULL DEFAULT '',
+    photo VARCHAR(255) DEFAULT NULL,
+    bio TEXT DEFAULT NULL,
+    graduation_year YEAR DEFAULT NULL,
+    phone VARCHAR(20) DEFAULT NULL,
+    role ENUM('member', 'admin') DEFAULT 'member',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE minutes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    meeting_date DATE NOT NULL,
+    author_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES members(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_minutes_date ON minutes(meeting_date DESC);
+CREATE INDEX idx_minutes_author ON minutes(author_id);
