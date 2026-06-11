@@ -14,6 +14,7 @@ class MinuteListScreen extends StatefulWidget {
 class _MinuteListScreenState extends State<MinuteListScreen> {
   List<Minute> _minutes = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -22,6 +23,7 @@ class _MinuteListScreenState extends State<MinuteListScreen> {
   }
 
   Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
     try {
       final token = await AuthService.getToken();
       final res = await ApiService.get('minutes/index.php', token: token);
@@ -32,9 +34,12 @@ class _MinuteListScreenState extends State<MinuteListScreen> {
               .toList();
           _loading = false;
         });
+      } else {
+        setState(() { _error = res['message'] ?? 'Server error'; _loading = false; });
       }
-    } catch (_) {}
-    setState(() => _loading = false);
+    } catch (e) {
+      setState(() { _error = 'Connection error. Pull down to retry.'; _loading = false; });
+    }
   }
 
   @override
@@ -44,7 +49,25 @@ class _MinuteListScreenState extends State<MinuteListScreen> {
       appBar: AppBar(title: const Text('Minutes')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(_error!, textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                      const SizedBox(height: 24),
+                      FilledButton.tonalIcon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
               onRefresh: _load,
               child: _minutes.isEmpty
                   ? const Center(child: Text('No minutes yet'))

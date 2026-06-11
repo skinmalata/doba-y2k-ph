@@ -16,6 +16,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _minutesCount = 0;
   List<Minute> _latestMinutes = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
+    setState(() { _loading = true; _error = null; });
     try {
       final token = await AuthService.getToken();
       final res = await ApiService.get('index.php', token: token);
@@ -36,9 +38,12 @@ class _HomeScreenState extends State<HomeScreen> {
               .toList();
           _loading = false;
         });
+      } else {
+        setState(() { _error = res['message'] ?? 'Server error'; _loading = false; });
       }
-    } catch (_) {}
-    setState(() => _loading = false);
+    } catch (e) {
+      setState(() { _error = 'Connection error. Pull down to retry.'; _loading = false; });
+    }
   }
 
   Future<void> _logout() async {
@@ -55,7 +60,25 @@ class _HomeScreenState extends State<HomeScreen> {
       drawer: _buildDrawer(),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(_error!, textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                      const SizedBox(height: 24),
+                      FilledButton.tonalIcon(
+                        onPressed: _loadData,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
               onRefresh: _loadData,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

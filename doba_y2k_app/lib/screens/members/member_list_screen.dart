@@ -13,6 +13,7 @@ class MemberListScreen extends StatefulWidget {
 class _MemberListScreenState extends State<MemberListScreen> {
   List<Member> _members = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -21,6 +22,7 @@ class _MemberListScreenState extends State<MemberListScreen> {
   }
 
   Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
     try {
       final token = await AuthService.getToken();
       final res =
@@ -31,9 +33,12 @@ class _MemberListScreenState extends State<MemberListScreen> {
               (res['members'] as List).map((j) => Member.fromJson(j)).toList();
           _loading = false;
         });
+      } else {
+        setState(() { _error = res['message'] ?? 'Server error'; _loading = false; });
       }
-    } catch (_) {}
-    setState(() => _loading = false);
+    } catch (e) {
+      setState(() { _error = 'Connection error. Pull down to retry.'; _loading = false; });
+    }
   }
 
   @override
@@ -43,7 +48,25 @@ class _MemberListScreenState extends State<MemberListScreen> {
       appBar: AppBar(title: const Text('Members')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_off, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(_error!, textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                      const SizedBox(height: 24),
+                      FilledButton.tonalIcon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
               onRefresh: _load,
               child: _members.isEmpty
                   ? const Center(child: Text('No members found'))
