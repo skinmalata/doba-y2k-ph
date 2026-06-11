@@ -27,7 +27,7 @@ $latest = $pdo->query(
 </div>
 
 <div class="text-center mb-5">
-    <h1 class="display-4 fw-bold mb-0" style="font-family:'Playfair Display',serif;color:var(--primary)">DOBA 2000 Set</h1>
+    <h1 class="display-4 fw-bold mb-0" style="font-family:'Playfair Display',serif;color:var(--primary)">DOBA Millenium Set</h1>
     <p class="lead text-muted mt-1" style="font-family:'Playfair Display',serif">(Port Harcourt Branch)</p>
 </div>
 

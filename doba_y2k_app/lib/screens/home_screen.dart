@@ -92,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Image.asset('assets/splash.jpg',
                               width: 100, height: 100),
                           const SizedBox(height: 12),
-                          const Text('DOBA 2000 Set',
+                          const Text('DOBA Millenium Set',
                               style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,

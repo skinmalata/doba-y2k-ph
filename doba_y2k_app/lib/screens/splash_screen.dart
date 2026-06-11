@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Image.asset('assets/splash.jpg', width: 120, height: 120),
             const SizedBox(height: 24),
             const Text(
-              'DOBA 2000 Set',
+              'DOBA Millenium Set',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,

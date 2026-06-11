@@ -75,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Image.asset('assets/splash.jpg', width: 80, height: 80),
             const SizedBox(height: 16),
-            const Text('Join DOBA 2000 Set',
+            const Text('Join DOBA Millenium Set',
                 style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,

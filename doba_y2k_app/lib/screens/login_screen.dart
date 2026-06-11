@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               Image.asset('assets/splash.jpg', width: 100, height: 100),
               const SizedBox(height: 16),
-              const Text('DOBA 2000 Set',
+              const Text('DOBA Millenium Set',
                   style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
