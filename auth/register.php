@@ -49,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $hash = password_hash($password, PASSWORD_BCRYPT);
     $stmt = $pdo->prepare(
-        'INSERT INTO members (username, email, password, first_name, last_name, graduation_year, status)
-         VALUES (?, ?, ?, ?, ?, ?, \'pending\')'
+        'INSERT INTO members (username, email, password, first_name, last_name, status)
+         VALUES (?, ?, ?, ?, ?, \'pending\')'
     );
-    $stmt->execute([$username, $email, $hash, $first_name, $last_name, $graduation_year ?: null]);
+    $stmt->execute([$username, $email, $hash, $first_name, $last_name]);
 
     redirectWith('/auth/login.php', 'Registration submitted! An admin must approve your account before you can log in.');
 }
@@ -81,15 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="mb-3">
                         <label class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" name="email" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Graduation Year</label>
-                        <select name="graduation_year" class="form-select">
-                            <option value="">— Select —</option>
-                            <?php for ($y = date('Y'); $y >= 1960; $y--): ?>
-                                <option value="<?= $y ?>"><?= $y ?></option>
-                            <?php endfor; ?>
-                        </select>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">

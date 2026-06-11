@@ -15,7 +15,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _lastCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
-  String _graduationYear = '';
   bool _loading = false;
 
   Future<void> _register() async {
@@ -41,7 +40,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'password': _passCtrl.text,
         'first_name': _firstCtrl.text,
         'last_name': _lastCtrl.text,
-        'graduation_year': _graduationYear,
       });
       if (!mounted) return;
       if (res['success'] == true) {
@@ -115,21 +113,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: 'Email *',
                     prefixIcon: Icon(Icons.email),
                     border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: _graduationYear.isEmpty ? null : _graduationYear,
-              decoration: const InputDecoration(
-                  labelText: 'Graduation Year',
-                  border: OutlineInputBorder()),
-              items: [
-                const DropdownMenuItem(value: '', child: Text('Select Year')),
-                ...List.generate(
-                    DateTime.now().year - 1960 + 1,
-                    (i) => (DateTime.now().year - i).toString()).map((y) =>
-                    DropdownMenuItem(value: y, child: Text(y))),
-              ],
-              onChanged: (v) => _graduationYear = v ?? '',
-            ),
             const SizedBox(height: 12),
             Row(
               children: [

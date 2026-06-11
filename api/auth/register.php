@@ -8,7 +8,6 @@ $email = trim($input['email'] ?? '');
 $password = $input['password'] ?? '';
 $first_name = trim($input['first_name'] ?? '');
 $last_name = trim($input['last_name'] ?? '');
-$graduation_year = trim($input['graduation_year'] ?? '');
 
 if ($username === '' || $email === '' || $password === '') {
     jsonResponse(['success' => false, 'message' => 'Required fields missing.']);
@@ -30,9 +29,9 @@ if ($stmt->fetch()) {
 
 $hash = password_hash($password, PASSWORD_BCRYPT);
 $stmt = $pdo->prepare(
-    'INSERT INTO members (username, email, password, first_name, last_name, graduation_year, status)
-     VALUES (?, ?, ?, ?, ?, ?, \'pending\')'
+    'INSERT INTO members (username, email, password, first_name, last_name, status)
+     VALUES (?, ?, ?, ?, ?, \'pending\')'
 );
-$stmt->execute([$username, $email, $hash, $first_name, $last_name, $graduation_year ?: null]);
+$stmt->execute([$username, $email, $hash, $first_name, $last_name]);
 
 jsonResponse(['success' => true, 'message' => 'Registration submitted! An admin must approve your account.']);

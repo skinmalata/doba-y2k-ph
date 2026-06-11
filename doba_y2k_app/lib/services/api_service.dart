@@ -9,19 +9,46 @@ class ApiService {
   static DateTime? _cookieExpiry;
 
   static Future<Map<String, dynamic>> get(String endpoint, {String? token}) async {
-    final headers = _buildHeaders(token);
-    return _request(() => http.get(Uri.parse('$baseUrl/$endpoint'), headers: headers), headers);
+    return _request(
+      (headers) => http.get(Uri.parse('$baseUrl/$endpoint'), headers: headers),
+      token: token,
+    );
   }
 
   static Future<Map<String, dynamic>> post(String endpoint,
       {Map<String, dynamic>? body, String? token}) async {
-    final headers = _buildHeaders(token);
-    final encoded = jsonEncode(body ?? {});
     return _request(
-      () => http.post(Uri.parse('$baseUrl/$endpoint'), headers: headers, body: encoded),
-      headers,
-      body: encoded,
+      (headers) => http.post(Uri.parse('$baseUrl/$endpoint'), headers: headers, body: jsonEncode(body ?? {})),
+      token: token,
+      body: jsonEncode(body ?? {}),
     );
+  }
+
+  static Future<Map<String, dynamic>> _request(
+    Future<http.Response> Function(Map<String, String>) send, {
+    String? token,
+    String? body,
+  }) async {
+    if (_testCookie == null || (_cookieExpiry != null && DateTime.now().isAfter(_cookieExpiry!))) {
+      await _fetchCookie();
+    }
+
+    var headers = _buildHeaders(token);
+    var res = await send(headers).timeout(const Duration(seconds: 20));
+
+    if (_isChallenge(res.body)) {
+      final cookie = _solveChallenge(res.body);
+      _testCookie = cookie;
+      _cookieExpiry = DateTime.now().add(const Duration(hours: 6));
+      headers = _buildHeaders(token);
+      final redirectUrl = _parseRedirectUrl(res.body);
+      final uri = redirectUrl != null ? Uri.parse(redirectUrl) : res.request!.url;
+      res = body != null
+          ? await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 20))
+          : await http.get(uri, headers: headers).timeout(const Duration(seconds: 20));
+    }
+
+    return jsonDecode(res.body);
   }
 
   static Map<String, String> _buildHeaders(String? token) {
@@ -29,31 +56,6 @@ class ApiService {
     if (token != null) headers['Authorization'] = 'Bearer $token';
     if (_testCookie != null) headers['Cookie'] = '__test=$_testCookie';
     return headers;
-  }
-
-  static Future<Map<String, dynamic>> _request(
-    Future<http.Response> Function() request,
-    Map<String, String> headers, {
-    String? body,
-  }) async {
-    if (_testCookie == null || (_cookieExpiry != null && DateTime.now().isAfter(_cookieExpiry!))) {
-      await _fetchCookie();
-    }
-    var res = await request().timeout(const Duration(seconds: 20));
-    var responseBody = res.body;
-    if (_isChallenge(responseBody)) {
-      final redirectUrl = _parseRedirectUrl(responseBody);
-      final cookie = _solveChallenge(responseBody);
-      _testCookie = cookie;
-      _cookieExpiry = DateTime.now().add(const Duration(hours: 6));
-      headers['Cookie'] = '__test=$cookie';
-      final retryUri = redirectUrl != null ? Uri.parse(redirectUrl) : res.request!.url;
-      res = body != null
-          ? await http.post(retryUri, headers: headers, body: body).timeout(const Duration(seconds: 20))
-          : await http.get(retryUri, headers: headers).timeout(const Duration(seconds: 20));
-      responseBody = res.body;
-    }
-    return jsonDecode(responseBody);
   }
 
   static Future<void> _fetchCookie() async {
@@ -73,9 +75,8 @@ class ApiService {
     final reg = RegExp(r'location\.href\s*=\s*"([^"]+)"');
     final match = reg.firstMatch(html);
     if (match == null) return null;
-    var url = match.group(1)!;
-    if (url.startsWith('?')) url = '$baseUrl$url';
-    return url;
+    final url = match.group(1)!;
+    return url.startsWith('?') ? '$baseUrl$url' : url;
   }
 
   static String _solveChallenge(String html) {
@@ -86,11 +87,15 @@ class ApiService {
     final iv = _hexToBytes(bReg.firstMatch(html)!.group(1)!);
     final ct = _hexToBytes(cReg.firstMatch(html)!.group(1)!);
 
-    final cipher = CFBBlockCipher(AESEngine(), 16)
-      ..init(false, ParametersWithIV(KeyParameter(key), iv));
-    final pt = Uint8List(ct.length);
-    cipher.processBlock(ct, 0, pt, 0);
-    return _bytesToHex(pt);
+    // AES-128-CFB decryption: Encrypt IV with key, XOR with ciphertext
+    final aes = AESEngine()..init(true, KeyParameter(key));
+    final keystream = Uint8List(16);
+    aes.processBlock(iv, 0, keystream, 0);
+    final plaintext = Uint8List(16);
+    for (var i = 0; i < 16; i++) {
+      plaintext[i] = keystream[i] ^ ct[i];
+    }
+    return _bytesToHex(plaintext);
   }
 
   static Uint8List _hexToBytes(String hex) {
