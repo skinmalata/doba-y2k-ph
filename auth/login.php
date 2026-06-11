@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['member_name'] = $member['first_name'] ?: $member['username'];
         $_SESSION['role'] = $member['role'];
 
-        $redirect = $_SESSION['redirect_after'] ?? '/members/profile.php?id=' . $member['id'];
+        $redirect = $_SESSION['redirect_after'] ?? '/index.php';
         unset($_SESSION['redirect_after']);
         redirectWith($redirect, 'Welcome back, ' . $member['first_name'] . '!');
     }
