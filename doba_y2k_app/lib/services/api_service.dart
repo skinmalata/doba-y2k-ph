@@ -86,7 +86,7 @@ class ApiService {
     final iv = _hexToBytes(bReg.firstMatch(html)!.group(1)!);
     final ct = _hexToBytes(cReg.firstMatch(html)!.group(1)!);
 
-    final cipher = CFBBlockCipher(AESEngine())
+    final cipher = CFBBlockCipher(AESEngine(), 16)
       ..init(false, ParametersWithIV(KeyParameter(key), iv));
     final pt = Uint8List(ct.length);
     cipher.processBlock(ct, 0, pt, 0);
