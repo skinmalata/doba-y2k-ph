@@ -49,13 +49,18 @@ $levies = $stmt->fetchAll();
             $memberCount->execute();
             $totalMembers = $memberCount->fetchColumn();
 
-            $paidStmt = $pdo->prepare('SELECT COUNT(*) FROM levy_payments WHERE levy_id = ?');
+            $paidStmt = $pdo->prepare('SELECT COALESCE(SUM(amount), 0) FROM levy_payments WHERE levy_id = ?');
             $paidStmt->execute([$levy['id']]);
-            $paidCount = $paidStmt->fetchColumn();
+            $totalPaidAmt = $paidStmt->fetchColumn();
 
-            $userPaidStmt = $pdo->prepare('SELECT id FROM levy_payments WHERE levy_id = ? AND member_id = ?');
+            $userPaidStmt = $pdo->prepare('SELECT COALESCE(SUM(amount), 0) FROM levy_payments WHERE levy_id = ? AND member_id = ?');
             $userPaidStmt->execute([$levy['id'], $_SESSION['member_id']]);
-            $userPaid = $userPaidStmt->fetch();
+            $userPaidAmt = $userPaidStmt->fetchColumn();
+        ?>
+        <?php
+            $userPct = $levy['amount'] > 0 ? min(100, round(100 * $userPaidAmt / $levy['amount'])) : 0;
+            $userFullyPaid = $userPaidAmt >= $levy['amount'];
+            $memberProgress = $levy['amount'] > 0 ? min(100, round(100 * $totalPaidAmt / ($levy['amount'] * $totalMembers))) : 0;
         ?>
         <div class="col-md-6">
             <div class="card shadow-sm <?= $levy['status'] === 'closed' ? 'opacity-75' : '' ?>">
@@ -66,13 +71,19 @@ $levies = $stmt->fetchAll();
                             <?php if ($levy['status'] === 'closed'): ?>
                                 <span class="badge bg-secondary me-1">Closed</span>
                             <?php endif; ?>
-                            <span class="badge bg-<?= $userPaid ? 'success' : 'warning' ?>">
-                                <?= $userPaid ? 'Paid' : 'Owing' ?>
+                            <span class="badge bg-<?= $userFullyPaid ? 'success' : ($userPaidAmt > 0 ? 'warning' : 'danger') ?>">
+                                <?php if ($userFullyPaid): ?>Paid
+                                <?php elseif ($userPaidAmt > 0): ?>Partial (<?= $userPct ?>%)
+                                <?php else: ?>Owing
+                                <?php endif; ?>
                             </span>
                         </div>
                     </div>
                     <p class="text-muted mb-1">
                         Amount: <strong>&#8358;<?= number_format($levy['amount'], 2) ?></strong>
+                        <?php if ($userPaidAmt > 0): ?>
+                            &middot; You paid: <strong>&#8358;<?= number_format($userPaidAmt, 2) ?></strong>
+                        <?php endif; ?>
                     </p>
                     <?php if ($levy['due_date']): ?>
                         <p class="text-muted mb-1">Due: <?= e($levy['due_date']) ?></p>
@@ -80,9 +91,18 @@ $levies = $stmt->fetchAll();
                     <?php if ($levy['description']): ?>
                         <p class="mb-1"><?= e($levy['description']) ?></p>
                     <?php endif; ?>
+                    <div class="mt-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Overall collection</small>
+                            <small class="text-muted">&#8358;<?= number_format($totalPaidAmt) ?> / &#8358;<?= number_format($levy['amount'] * $totalMembers) ?></small>
+                        </div>
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar bg-info" style="width:<?= $memberProgress ?>%"></div>
+                        </div>
+                    </div>
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <small class="text-muted">
-                            <?= $paidCount ?>/<?= $totalMembers ?> members paid
+                            <?= $totalPaidAmt > 0 ? number_format($totalPaidAmt, 2) : 0 ?> collected
                         </small>
                         <div>
                             <?php if (isAdmin()): ?>

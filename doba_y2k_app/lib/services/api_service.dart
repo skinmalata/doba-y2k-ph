@@ -38,20 +38,20 @@ class ApiService {
     var responseBody = res.body;
 
     if (_isChallenge(responseBody)) {
-      final cookies = _computeCookies(responseBody);
-      final redirectUrl = _parseRedirectUrl(responseBody);
-      final uri = redirectUrl != null ? Uri.parse(redirectUrl) : res.request!.url;
-
-      for (final cookie in cookies) {
+      final cookie = _computeCookie(responseBody);
+      if (cookie != null) {
         _testCookie = cookie;
         _cookieExpiry = DateTime.now().add(const Duration(hours: 6));
         headers = _buildHeaders(token);
         res = body != null
-            ? await http.post(uri, headers: headers, body: body).timeout(const Duration(seconds: 20))
-            : await http.get(uri, headers: headers).timeout(const Duration(seconds: 20));
+            ? await http.post(res.request!.url, headers: headers, body: body).timeout(const Duration(seconds: 20))
+            : await http.get(res.request!.url, headers: headers).timeout(const Duration(seconds: 20));
         responseBody = res.body;
-        if (!_isChallenge(responseBody)) break;
       }
+    }
+
+    if (_isChallenge(responseBody)) {
+      return {'success': false, 'message': 'Server challenge failed. Try again.'};
     }
 
     return jsonDecode(responseBody);
@@ -69,8 +69,8 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/index.php');
       final res = await http.get(uri).timeout(const Duration(seconds: 15));
       if (_isChallenge(res.body)) {
-        final cookies = _computeCookies(res.body);
-        if (cookies.isNotEmpty) _testCookie = cookies.first;
+        final cookie = _computeCookie(res.body);
+        if (cookie != null) _testCookie = cookie;
         _cookieExpiry = DateTime.now().add(const Duration(hours: 6));
       }
     } catch (_) {}
@@ -78,68 +78,28 @@ class ApiService {
 
   static bool _isChallenge(String body) => body.contains('__test') && body.contains('slowAES');
 
-  static String? _parseRedirectUrl(String html) {
-    final reg = RegExp(r'location\.href\s*=\s*"([^"]+)"');
-    final match = reg.firstMatch(html);
-    if (match == null) return null;
-    final url = match.group(1)!;
-    return url.startsWith('?') ? '$baseUrl$url' : url;
-  }
-
-  static List<String> _computeCookies(String html) {
+  static String? _computeCookie(String html) {
     final aReg = RegExp(r'a=toNumbers\("([a-f0-9]+)"\)');
     final bReg = RegExp(r'b=toNumbers\("([a-f0-9]+)"\)');
     final cReg = RegExp(r'c=toNumbers\("([a-f0-9]+)"\)');
-    final a = aReg.firstMatch(html)!.group(1)!;
-    final b = bReg.firstMatch(html)!.group(1)!;
-    final c = cReg.firstMatch(html)!.group(1)!;
+    final aMatch = aReg.firstMatch(html);
+    final bMatch = bReg.firstMatch(html);
+    final cMatch = cReg.firstMatch(html);
+    if (aMatch == null || bMatch == null || cMatch == null) return null;
 
-    final key = _hexToBytes(a);
-    final key256 = _hexToBytes(a + a); // repeat 16-byte key to 32 bytes
-    final iv = _hexToBytes(b);
-    final ct = _hexToBytes(c);
+    final key = _hexToBytes(aMatch.group(1)!);
+    final iv = _hexToBytes(bMatch.group(1)!);
+    final ct = _hexToBytes(cMatch.group(1)!);
 
-    final results = <String>[];
-
-    // 1. AES-128-CFB: encrypt IV with AES-128, XOR with ciphertext
-    try {
-      final aes = AESEngine()..init(true, KeyParameter(key));
-      final ks = Uint8List(16);
-      aes.processBlock(iv, 0, ks, 0);
-      final pt = Uint8List(16);
-      for (var i = 0; i < 16; i++) pt[i] = ks[i] ^ ct[i];
-      results.add(_bytesToHex(pt));
-    } catch (_) {}
-
-    // 2. AES-128-CBC
     try {
       final cipher = CBCBlockCipher(AESEngine())
         ..init(false, ParametersWithIV(KeyParameter(key), iv));
       final pt = Uint8List(16);
       cipher.processBlock(ct, 0, pt, 0);
-      results.add(_bytesToHex(pt));
-    } catch (_) {}
-
-    // 3. AES-256-CBC (32-byte key)
-    try {
-      final cipher = CBCBlockCipher(AESEngine())
-        ..init(false, ParametersWithIV(KeyParameter(key256), iv));
-      final pt = Uint8List(16);
-      cipher.processBlock(ct, 0, pt, 0);
-      results.add(_bytesToHex(pt));
-    } catch (_) {}
-
-    // 4. AES-256-CFB (32-byte key)
-    try {
-      final aes = AESEngine()..init(true, KeyParameter(key256));
-      final ks = Uint8List(16);
-      aes.processBlock(iv, 0, ks, 0);
-      final pt = Uint8List(16);
-      for (var i = 0; i < 16; i++) pt[i] = ks[i] ^ ct[i];
-      results.add(_bytesToHex(pt));
-    } catch (_) {}
-
-    return results;
+      return _bytesToHex(pt);
+    } catch (_) {
+      return null;
+    }
   }
 
   static Uint8List _hexToBytes(String hex) {

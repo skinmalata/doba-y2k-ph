@@ -5,6 +5,14 @@ require_once __DIR__ . '/../includes/functions.php';
 
 requireLogin();
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isAdmin()) {
+    $txnId = (int)($_POST['id'] ?? 0);
+    if (isset($_POST['delete'])) {
+        $pdo->prepare('DELETE FROM transactions WHERE id = ?')->execute([$txnId]);
+        redirectWith('/accounts/index.php', 'Transaction deleted.');
+    }
+}
+
 $pageTitle = 'Accounts';
 include __DIR__ . '/../includes/header.php';
 
@@ -88,6 +96,7 @@ $transactions = $stmt->fetchAll();
                             <th>Amount</th>
                             <th>Member</th>
                             <th>Recorded By</th>
+                            <?php if (isAdmin()): ?><th>Actions</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -106,6 +115,17 @@ $transactions = $stmt->fetchAll();
                             </td>
                             <td><?= $t['member_first'] ? e($t['member_first'] . ' ' . $t['member_last']) : '—' ?></td>
                             <td><?= e($t['first_name'] . ' ' . $t['last_name']) ?></td>
+                            <?php if (isAdmin()): ?>
+                            <td class="text-nowrap">
+                                <a href="<?= url('/accounts/edit.php?id=' . $t['id']) ?>" class="btn btn-sm btn-outline-primary"
+                                   title="Edit"><i class="bi bi-pencil"></i></a>
+                                <form method="post" class="d-inline" onsubmit="return confirm('Delete this transaction?')">
+                                    <input type="hidden" name="id" value="<?= $t['id'] ?>">
+                                    <button type="submit" name="delete" class="btn btn-sm btn-outline-danger"
+                                            title="Delete"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                            <?php endif; ?>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

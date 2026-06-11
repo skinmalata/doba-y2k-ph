@@ -59,40 +59,74 @@ class _LevyListScreenState extends State<LevyListScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ..._levies.map((l) => Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          title: Text(l.title,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text(
-                            '₦${l.amount.toStringAsFixed(2)}'
-                            '${l.dueDate != null ? ' · Due: ${l.dueDate}' : ''}',
-                          ),
-                          trailing: l.isPaid
-                              ? const Chip(
-                                  label: Text('Paid',
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 12)),
-                                  backgroundColor: Colors.green,
-                                  padding: EdgeInsets.zero,
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                )
-                              : const Chip(
-                                  label: Text('Owing',
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 12)),
-                                  backgroundColor: Colors.orange,
-                                  padding: EdgeInsets.zero,
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                        ),
-                      )),
+                  ..._levies.map((l) => _buildLevyCard(l)),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildLevyCard(Levy l) {
+    final pct = l.amount > 0 ? (100 * l.userPaid / l.amount).clamp(0, 100) : 0.0;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(l.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+                Chip(
+                  label: Text(
+                    l.isFullyPaid
+                        ? 'Paid'
+                        : l.userPaid > 0
+                            ? 'Partial'
+                            : 'Owing',
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                  backgroundColor: l.isFullyPaid
+                      ? Colors.green
+                      : l.userPaid > 0
+                          ? Colors.orange
+                          : Colors.red,
+                  padding: EdgeInsets.zero,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '₦${l.amount.toStringAsFixed(2)}'
+              '${l.dueDate != null ? ' · Due: ${l.dueDate}' : ''}',
+              style: const TextStyle(color: Colors.grey),
+            ),
+            if (l.userPaid > 0) ...[
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: pct / 100,
+                  backgroundColor: Colors.grey[200],
+                  color: l.isFullyPaid ? Colors.green : Colors.orange,
+                  minHeight: 8,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '₦${l.userPaid.toStringAsFixed(0)} / ₦${l.amount.toStringAsFixed(0)}',
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 

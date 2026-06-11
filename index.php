@@ -63,10 +63,11 @@ $latest = $pdo->query(
 
 <?php if (isLoggedIn()):
     $stmt = $pdo->prepare(
-        'SELECT l.id, l.title, l.amount, l.due_date,
-                COALESCE(lp.id, 0) AS is_paid
+        'SELECT l.id, l.title, l.amount, l.due_date, l.status,
+                COALESCE(SUM(lp.amount), 0) AS user_paid
          FROM levies l
          LEFT JOIN levy_payments lp ON lp.levy_id = l.id AND lp.member_id = ?
+         GROUP BY l.id, l.title, l.amount, l.due_date, l.status, l.created_at
          ORDER BY l.created_at DESC'
     );
     $stmt->execute([$_SESSION['member_id']]);
@@ -80,11 +81,14 @@ $latest = $pdo->query(
 
     foreach ($memberLevies as $ml) {
         $totalLevies += $ml['amount'];
-        if ($ml['is_paid']) {
-            $totalPaid += $ml['amount'];
+        $totalPaid += $ml['user_paid'];
+        $remaining = max(0, $ml['amount'] - $ml['user_paid']);
+        if ($ml['status'] === 'active') $totalOwing += $remaining;
+        if ($ml['user_paid'] >= $ml['amount']) {
             $paidLevies[] = $ml;
+        } elseif ($ml['user_paid'] > 0) {
+            $owingLevies[] = $ml;
         } else {
-            $totalOwing += $ml['amount'];
             $owingLevies[] = $ml;
         }
     }
@@ -151,13 +155,21 @@ $latest = $pdo->query(
                 <span class="fw-bold">Owing Levies (<?= count($owingLevies) ?>)</span>
             </div>
             <div class="list-group list-group-flush">
-                <?php foreach ($owingLevies as $ol): ?>
+                <?php foreach ($owingLevies as $ol):
+                    $olPct = $ol['amount'] > 0 ? min(100, round(100 * $ol['user_paid'] / $ol['amount'])) : 0;
+                ?>
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                         <strong><?= e($ol['title']) ?></strong>
                         <br><small class="text-muted">Due: <?= $ol['due_date'] ? e($ol['due_date']) : 'N/A' ?></small>
+                        <?php if ($ol['user_paid'] > 0): ?>
+                        <div class="progress mt-1" style="height:6px;max-width:150px;">
+                            <div class="progress-bar bg-warning" style="width:<?= $olPct ?>%"></div>
+                        </div>
+                        <small class="text-muted">&#8358;<?= number_format($ol['user_paid']) ?> paid</small>
+                        <?php endif; ?>
                     </div>
-                    <span class="text-danger fw-bold">&#8358;<?= number_format($ol['amount'], 2) ?></span>
+                    <span class="text-danger fw-bold">&#8358;<?= number_format(max(0, $ol['amount'] - $ol['user_paid']), 2) ?></span>
                 </div>
                 <?php endforeach; ?>
             </div>

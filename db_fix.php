@@ -31,7 +31,20 @@ try {
         echo "'member_id' column already exists in transactions.\n";
     }
 
+    $stmt = $pdo->query("SHOW COLUMNS FROM levy_payments LIKE 'receipt_ref'");
+    if ($stmt->fetch()) {
+        echo "'receipt_ref' column exists in levy_payments.\n";
+    }
+
     echo "Database schema check complete.\n";
+
+    echo "\n-- Migration for partial levy payments --\n";
+    echo "The levy_payments table already supports partial payments (amount column exists).\n";
+    echo "No schema changes needed. Remove the 'already paid' check in application code.\n";
+
+    echo "\n-- Migration for transactions edit/delete --\n";
+    echo "No schema changes needed. Application-level changes only.\n";
+
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage() . "\n";
 }
