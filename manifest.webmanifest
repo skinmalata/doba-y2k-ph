@@ -1,0 +1,32 @@
+{
+  "name": "DOBA Millenium Set",
+  "short_name": "DOBA Y2K",
+  "description": "DOBA Millenium Set (Port Harcourt Branch) — Keeping our brotherhood alive, one meeting at a time.",
+  "start_url": "/oldboys/index.php",
+  "scope": "/oldboys/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "orientation": "portrait-primary",
+  "categories": ["social", "education"],
+  "icons": [
+    {
+      "src": "/oldboys/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/oldboys/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/oldboys/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

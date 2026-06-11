@@ -61,6 +61,43 @@ $latest = $pdo->query(
     </div>
 </div>
 
+<div class="text-center mb-5">
+    <div class="card shadow-sm border-gold d-inline-block mx-auto" style="max-width:500px">
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                <i class="bi bi-phone display-6" style="color:var(--gold)"></i>
+                <div class="text-start">
+                    <strong class="d-block">Get the Mobile App</strong>
+                    <small class="text-muted">Install as PWA or download APK</small>
+                </div>
+                <button id="installPwaBtn" class="btn btn-outline-dark btn-sm d-none">
+                    <i class="bi bi-download"></i> Install App
+                </button>
+                <a href="https://nightly.link/skinmalata/doba-y2k-ph/workflows/build-apk/main/doba-y2k-app-release.zip"
+                   class="btn btn-dark btn-sm" target="_blank" rel="noopener">
+                    <i class="bi bi-android2"></i> Download APK
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installPwaBtn').classList.remove('d-none');
+    });
+    document.getElementById('installPwaBtn')?.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const result = await deferredPrompt.userChoice;
+            if (result.outcome === 'accepted') deferredPrompt = null;
+        }
+    });
+</script>
+
 <?php if (isLoggedIn()):
     $stmt = $pdo->prepare(
         'SELECT l.id, l.title, l.amount, l.due_date, l.status,
