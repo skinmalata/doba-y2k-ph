@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'package:pointycastle/pointycastle.dart';
+import 'package:pointycastle/export.dart';
 import '../api_config.dart';
 
 class ApiService {

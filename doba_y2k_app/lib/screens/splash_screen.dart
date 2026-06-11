@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
               '(Port Harcourt Branch)',
               style: TextStyle(
                 fontSize: 16,
-                color: Color(0xFFd4af37),
+                color: Colors.black87,
               ),
             ),
             const SizedBox(height: 32),
