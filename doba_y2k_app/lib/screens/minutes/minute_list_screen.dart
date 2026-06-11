@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../services/auth_service.dart';
-import '../models/minute.dart';
-import 'minutes/minute_view_screen.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
+import '../../models/minute.dart';
+import 'minute_view_screen.dart';
 
 class MinuteListScreen extends StatefulWidget {
   const MinuteListScreen({super.key});

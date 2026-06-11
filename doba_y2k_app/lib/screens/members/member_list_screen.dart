@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import '../services/auth_service.dart';
-import '../models/member.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
+import '../../models/member.dart';
 
 class MemberListScreen extends StatefulWidget {
   const MemberListScreen({super.key});
