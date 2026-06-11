@@ -1,11 +1,9 @@
 const CACHE = 'doba-y2k-v1';
 const PRECACHE = [
-  '/oldboys/',
-  '/oldboys/index.php',
-  '/oldboys/manifest.webmanifest',
-  '/oldboys/icon.svg',
-  '/oldboys/icon-192.png',
-  '/oldboys/icon-512.png',
+  '/manifest.json',
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {
@@ -21,16 +19,17 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
   if (e.request.method !== 'GET') return;
+
   e.respondWith(
-    fetch(e.request).then((res) => {
-      const clone = res.clone();
-      caches.open(CACHE).then((cache) => {
-        if (e.request.url.startsWith(self.location.origin + '/oldboys/')) {
-          cache.put(e.request, clone);
-        }
-      });
+    fetch(e.request, { credentials: 'same-origin' }).then((res) => {
+      if (res.ok) {
+        const clone = res.clone();
+        caches.open(CACHE).then((cache) => cache.put(e.request, clone));
+      }
       return res;
-    }).catch(() => caches.match(e.request).then((cached) => cached || caches.match('/oldboys/index.php')))
+    }).catch(() => caches.match(e.request))
   );
 });
