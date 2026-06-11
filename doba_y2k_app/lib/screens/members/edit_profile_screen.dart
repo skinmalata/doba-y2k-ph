@@ -99,10 +99,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   CircleAvatar(
                     radius: 60,
                     backgroundImage: _photoFile != null
-                        ? FileImage(_photoFile!)
+                        ? FileImage(_photoFile!) as ImageProvider
                         : widget.member.photo != null
                             ? NetworkImage(
-                                'https://dobay2k.unaux.com/oldboys/uploads/${widget.member.photo}')
+                                'https://dobay2k.unaux.com/oldboys/uploads/${widget.member.photo}') as ImageProvider
                             : null,
                     child: _photoFile == null && widget.member.photo == null
                         ? const Icon(Icons.person, size: 60)
