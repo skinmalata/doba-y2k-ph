@@ -33,6 +33,13 @@ jobs:
       - name: Accept Android licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || true
 
+      - name: Regenerate Android project
+        run: |
+          cp pubspec.yaml pubspec.yaml.bak
+          rm -rf android ios
+          flutter create --project-name doba_y2k_app --org com.doba --platforms android .
+          mv pubspec.yaml.bak pubspec.yaml
+
       - name: Install dependencies
         run: flutter pub get
 
