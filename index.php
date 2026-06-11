@@ -68,15 +68,11 @@ $latest = $pdo->query(
                 <i class="bi bi-phone display-6" style="color:var(--gold)"></i>
                 <div class="text-start">
                     <strong class="d-block">Get the Mobile App</strong>
-                    <small class="text-muted">Install as PWA or download APK</small>
+                    <small class="text-muted">Install as Progressive Web App</small>
                 </div>
-                <button id="installPwaBtn" class="btn btn-outline-dark btn-sm d-none">
+                <button id="installPwaBtn" class="btn btn-dark btn-sm d-none">
                     <i class="bi bi-download"></i> Install App
                 </button>
-                <a href="https://nightly.link/skinmalata/doba-y2k-ph/workflows/build-apk/main/doba-y2k-app-release.zip"
-                   class="btn btn-dark btn-sm" target="_blank" rel="noopener">
-                    <i class="bi bi-android2"></i> Download APK
-                </a>
             </div>
         </div>
     </div>
