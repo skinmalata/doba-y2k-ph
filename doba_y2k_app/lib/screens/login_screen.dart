@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _showError(res['message'] ?? 'Login failed');
       }
     } catch (e) {
-      _showError('Connection error. Check your internet.');
+      _showError('Connection error: ${e.toString().length > 80 ? e.toString().substring(0, 80) + '...' : e.toString()}');
     }
     setState(() => _loading = false);
   }

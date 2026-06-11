@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../api_config.dart';
 
 class ApiService {
@@ -9,6 +10,38 @@ class ApiService {
   static const String _hardcodedCookie = '331ae1746b133ada0fc284fff9a9b629';
   static String? _testCookie;
   static DateTime? _cookieExpiry;
+
+  static Future<Map<String, dynamic>> upload(String endpoint,
+      {required Map<String, String> fields, File? photo, String? token}) async {
+    Future<http.Response> _doUpload() async {
+      var req = http.MultipartRequest('POST', Uri.parse('$baseUrl/$endpoint'));
+      req.headers['Cookie'] = '__test=$_testCookie';
+      if (token != null) req.headers['Authorization'] = 'Bearer $token';
+      req.fields.addAll(fields);
+      if (photo != null) {
+        req.files.add(await http.MultipartFile.fromPath('photo', photo.path,
+            contentType: MediaType('image', photo.path.endsWith('png') ? 'png' : 'jpeg')));
+      }
+      var streamed = await req.send().timeout(const Duration(seconds: 30));
+      return http.Response.fromStream(streamed);
+    }
+
+    if (_testCookie == null || (_cookieExpiry != null && DateTime.now().isAfter(_cookieExpiry!))) {
+      _testCookie = _hardcodedCookie;
+      _cookieExpiry = DateTime.now().add(const Duration(hours: 6));
+    }
+
+    var res = await _doUpload();
+    if (_isChallenge(res.body)) {
+      _testCookie = _hardcodedCookie;
+      _cookieExpiry = DateTime.now().add(const Duration(hours: 6));
+      res = await _doUpload();
+    }
+    if (_isChallenge(res.body)) {
+      return {'success': false, 'message': 'Server challenge failed. Try again.'};
+    }
+    return jsonDecode(res.body);
+  }
 
   static Future<Map<String, dynamic>> get(String endpoint, {String? token}) async {
     return _request(
@@ -58,7 +91,10 @@ class ApiService {
   }
 
   static Map<String, String> _buildHeaders(String? token) {
-    final headers = <String, String>{'Content-Type': 'application/json'};
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      'User-Agent': 'DobaY2kApp/1.0 (Android)',
+    };
     if (token != null) headers['Authorization'] = 'Bearer $token';
     if (_testCookie != null) headers['Cookie'] = '__test=$_testCookie';
     return headers;

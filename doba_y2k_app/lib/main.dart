@@ -6,6 +6,8 @@ import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/members/member_list_screen.dart';
 import 'screens/members/member_profile_screen.dart';
+import 'screens/members/edit_profile_screen.dart';
+import 'models/member.dart';
 import 'screens/minutes/minute_list_screen.dart';
 import 'screens/minutes/minute_view_screen.dart';
 import 'screens/levies/levy_list_screen.dart';
@@ -53,6 +55,10 @@ class DobaApp extends StatelessWidget {
             return MaterialPageRoute(
                 builder: (_) =>
                     MemberProfileScreen(memberId: id));
+          case '/members/edit':
+            final member = settings.arguments as Member;
+            return MaterialPageRoute(
+                builder: (_) => EditProfileScreen(member: member));
           case '/minutes':
             return MaterialPageRoute(
                 builder: (_) => const MinuteListScreen());

@@ -27,7 +27,7 @@ if ($search) {
 $members = $stmt->fetchAll();
 ?>
 
-<h1 class="mb-4"><i class="bi bi-people-fill"></i> Our Members</h1>
+<h1 class="mb-4"><i class="bi bi-people-fill"></i> Active Members</h1>
 
 <form method="get" class="row g-2 mb-4">
     <div class="col-auto flex-grow-1">

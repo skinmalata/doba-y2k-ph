@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import '../models/minute.dart';
+import '../models/member.dart';
+import 'members/edit_profile_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -183,6 +185,18 @@ class _HomeScreenState extends State<HomeScreen> {
           _drawerItem(Icons.people, 'Members', () {
             Navigator.pop(context);
             Navigator.pushNamed(context, '/members');
+          }),
+          _drawerItem(Icons.person, 'Edit Profile', () async {
+            Navigator.pop(context);
+            final token = await AuthService.getToken();
+            if (token == null) return;
+            final res = await ApiService.get('members/profile.php?id=${await AuthService.getMemberId()}', token: token);
+            if (res['success'] == true) {
+              final member = Member.fromJson(res['member']);
+              if (!context.mounted) return;
+              await Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => EditProfileScreen(member: member)));
+            }
           }),
           _drawerItem(Icons.description, 'Minutes', () {
             Navigator.pop(context);
